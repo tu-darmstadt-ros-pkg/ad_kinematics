@@ -1,6 +1,5 @@
 #include <ad_kinematics/tree.h>
 
-#include <moveit/robot_model_loader/robot_model_loader.h>
 
 namespace ad_kinematics {
 
@@ -12,7 +11,7 @@ Tree::Tree(const urdf::ModelInterfaceSharedPtr& urdf)
   updateMimicJoints(urdf);
 }
 
-unsigned int Tree::getNumActiveJoints()
+long unsigned int Tree::getNumActiveJoints()
 {
   return active_joint_names_.size();
 }
@@ -33,15 +32,15 @@ std::vector<int> Tree::getJointQIndices(const std::vector<std::string>& joint_na
   std::vector<int> indices;
   for (const std::string& joint_name: joint_names) {
     bool found = false;
-    for (int j = 0; j < active_joint_names_.size(); ++j) {
+    for (auto j = 0ul; j < active_joint_names_.size(); ++j) {
       if (active_joint_names_[j] == joint_name) {
-        indices.push_back(j);
+        indices.push_back((int)j);
         found = true;
         break;
       }
     }
     if (!found) {
-      ROS_ERROR_STREAM("Could not find joint with name '" << joint_name << "'.");
+      RCLCPP_ERROR(rclcpp::get_logger("tree_logger"),"Could not find joint with name '%s'.", joint_name.c_str());
       indices.push_back(-1);
     }
   }
@@ -59,7 +58,7 @@ std::shared_ptr<Link> Tree::addToTree(const urdf::LinkConstSharedPtr& urdf_link,
 {
   // q_index of joint matches current number of active joints
   // q_index parameter is only used, if joint is actually actuated
-  std::shared_ptr<Joint> joint = urdf_loader::toJoint(urdf_link->parent_joint, getNumActiveJoints());
+  std::shared_ptr<Joint> joint = urdf_loader::toJoint(urdf_link->parent_joint, (int) getNumActiveJoints());
   joints_.emplace(joint->getName(), joint);
   joint_names_.push_back(joint->getName());
   if (joint->isActuated()) {
@@ -69,9 +68,9 @@ std::shared_ptr<Link> Tree::addToTree(const urdf::LinkConstSharedPtr& urdf_link,
       mimic_joint_names_.push_back(joint->getName());
     }
   }
-  //  ROS_INFO_STREAM("Origin: " << joint->getOrigin() << ", Axis: " << joint->getAxis() << ", Pose(0): " << joint->pose(0.0).toString());
+  //  RCLCPP_INFO(rclcpp::get_logger("tree_logger"),"Origin: " << joint->getOrigin() << ", Axis: " << joint->getAxis() << ", Pose(0): " << joint->pose(0.0).toString());
   auto link = std::make_shared<Link>(urdf_link->name, urdf_loader::toTransform(urdf_link->parent_joint->parent_to_joint_origin_transform), joint, parent);
-  ROS_INFO_STREAM("Adding link " << urdf_link->name);
+  RCLCPP_INFO(rclcpp::get_logger("tree_logger"),"Adding link %s", urdf_link->name.c_str());
   links_.emplace(link->getName(), link);
 
   return link;
@@ -80,7 +79,7 @@ std::shared_ptr<Link> Tree::getLink(const std::string& link_name) const
 {
   auto it = links_.find(link_name);
   if (it == links_.end()) {
-    ROS_ERROR_STREAM("[Tree::computeTransform] Unknown link '" << link_name << "'.");
+    RCLCPP_ERROR(rclcpp::get_logger("tree_logger"),"[Tree::computeTransform] Unknown link '%s'.", link_name.c_str());
     return {};
   }
   return it->second;
@@ -95,14 +94,15 @@ void Tree::updateMimicJoints(const urdf::ModelInterfaceSharedPtr& urdf)
     if (!joint_mimic) continue;
 
     joint->setQIndex(joint_mimic->getQIndex());
-    ROS_INFO_STREAM("Setting joint " << joint->getName() << " as mimic of " << joint->getMimic()->mimic_joint_name << " (offset: " << joint->getMimic()->offset << ", multiplier: " << joint->getMimic()->multiplier << ", q_index: " << joint->getQIndex() << ")");
+    RCLCPP_INFO(rclcpp::get_logger("tree_logger"),"Setting joint %s as mimic of %s (offset: %f, multiplier: %f, q_index: %i)",
+    joint->getName().c_str(), joint->getMimic()->mimic_joint_name.c_str(), joint->getMimic()->offset, joint->getMimic()->multiplier, joint->getQIndex());
   }
 }
 std::shared_ptr<Joint> Tree::getJoint(const std::string& joint_name) const
 {
   auto it = joints_.find(joint_name);
   if (it == joints_.end()) {
-    ROS_ERROR_STREAM("[Tree::computeTransform] Unknown joint '" << joint_name << "'.");
+    RCLCPP_ERROR(rclcpp::get_logger("tree_logger"),"[Tree::computeTransform] Unknown joint '%s'.", joint_name.c_str());
     return {};
   }
   return it->second;

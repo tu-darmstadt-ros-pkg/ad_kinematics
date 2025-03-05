@@ -1,12 +1,12 @@
 #ifndef AD_KINEMATICS__TRANSFORMS_H
 #define AD_KINEMATICS__TRANSFORMS_H
 
-#include <Eigen/Eigen>
+#include <eigen3/Eigen/Eigen>
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
 
-#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/msg/pose.hpp>
 
 namespace ad_kinematics {
 
@@ -151,14 +151,14 @@ template <typename T> Transform<T> Joint::pose(const T &q) const {
     offset = T(mimic_->offset);
   }
   T q_scaled = T(multiplier) * q + T(offset);
-  if (const FixedJoint* joint = dynamic_cast<const FixedJoint*>(this)) {
-    return joint->pose(q_scaled);
+  if (const FixedJoint* fixed_joint = dynamic_cast<const FixedJoint*>(this)) {
+    return fixed_joint->pose(q_scaled);
   }
-  else if (const RevoluteJoint* joint = dynamic_cast<const RevoluteJoint*>(this)) {
-    return joint->pose(q_scaled);
+  else if (const RevoluteJoint* revolute_joint = dynamic_cast<const RevoluteJoint*>(this)) {
+    return revolute_joint->pose(q_scaled);
   }
-  else if (const ContinuousJoint* joint = dynamic_cast<const ContinuousJoint*>(this)) {
-    return joint->pose(q_scaled);
+  else if (const ContinuousJoint* continuous_joint = dynamic_cast<const ContinuousJoint*>(this)) {
+    return continuous_joint->pose(q_scaled);
   }
   else {
     std::cerr << "Dynamic cast failed!" << std::endl;
@@ -191,7 +191,7 @@ private:
   std::shared_ptr<Link> parent_link_;
 };
 
-geometry_msgs::Pose transformToMsg(const Transformd& transform);
-Transformd msgToTransform(const geometry_msgs::Pose& msg);
+geometry_msgs::msg::Pose transformToMsg(const Transformd& transform);
+Transformd msgToTransform(const geometry_msgs::msg::Pose& msg);
 }
 #endif

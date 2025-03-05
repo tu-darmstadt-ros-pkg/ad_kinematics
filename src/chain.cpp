@@ -1,20 +1,12 @@
 #include <ad_kinematics/chain.h>
 
-#include <moveit/robot_model_loader/robot_model_loader.h>
+#include <moveit/robot_model_loader/robot_model_loader.hpp>
 
 namespace ad_kinematics {
 
 Chain::Chain(const urdf::ModelInterfaceSharedPtr& urdf, const moveit::core::JointModelGroup *joint_group)
 {
   init(urdf, joint_group);
-}
-
-Chain::Chain(std::string group_name)
-{
-  robot_model_loader::RobotModelLoader robot_model_loader;
-  robot_model::RobotModelPtr robot_model_ptr = robot_model_loader.getModel();
-  robot_model::JointModelGroup* joint_model_group = robot_model_ptr->getJointModelGroup(group_name);
-  init(robot_model_ptr->getURDF(), joint_model_group);
 }
 
 unsigned int Chain::getNumActuatedJoints() {
@@ -34,37 +26,37 @@ std::vector<int> Chain::getJointQIndices(const std::vector<std::string> &joint_n
       }
     }
     if (!found) {
-      ROS_ERROR_STREAM("Could not find joint with name '" << joint_name << "'.");
+      RCLCPP_ERROR(rclcpp::get_logger("chain_logger"),"Could not find joint with name '%s'.", joint_name.c_str());
       indices.push_back(-1);
     }
   }
   return indices;
 }
 
-void Chain::init(const urdf::ModelInterfaceSharedPtr &urdf, const moveit::core::JointModelGroup *joint_group)
+void Chain::init(const urdf::ModelInterfaceSharedPtr &urdf, const moveit::core::JointModelGroup* joint_group)
 {
   num_actuated_joints_ = 0;
   buildChain(urdf->getRoot(), joint_group);
 }
 
-void Chain::buildChain(const urdf::LinkConstSharedPtr& root, const robot_model::JointModelGroup* joint_group) {
-  ROS_INFO_STREAM("Parsing URDF");
+void Chain::buildChain(const urdf::LinkConstSharedPtr& root, const moveit::core::JointModelGroup* joint_group) {
+  RCLCPP_INFO(rclcpp::get_logger("chain_logger"),"Parsing URDF");
   base_link_name_ = root->name;
   tip_link_name_ = base_link_name_;
-  std::vector<const robot_model::LinkModel*> link_models = joint_group->getLinkModels();
+  std::vector<const moveit::core::LinkModel*> link_models = joint_group->getLinkModels();
 
   urdf::LinkConstSharedPtr current_link = root;
-  for (std::vector<const robot_model::LinkModel*>::iterator it = link_models.begin(); it != link_models.end(); ++it) {
+  for (std::vector<const moveit::core::LinkModel*>::iterator it = link_models.begin(); it != link_models.end(); ++it) {
     std::string link_name = (*it)->getName();
 
     bool found = false;
-    ROS_INFO_STREAM(current_link->name << ":");
+    RCLCPP_INFO(rclcpp::get_logger("chain_logger"),"%s :", current_link->name.c_str());
     // TODO replace with 'std::find'
     for (std::vector<urdf::LinkSharedPtr>::const_iterator it_childs = current_link->child_links.begin();
          it_childs != current_link->child_links.end() && !found;
          ++it_childs) {
 
-      ROS_INFO_STREAM(" --> " << (*it_childs)->name);
+      RCLCPP_INFO(rclcpp::get_logger("chain_logger"), " --> %s", (*it_childs)->name.c_str());
 
       if ((*it_childs)->name == link_name) {
         addToChain(*it_childs);
@@ -74,11 +66,11 @@ void Chain::buildChain(const urdf::LinkConstSharedPtr& root, const robot_model::
     }
 
     if (!found) {
-      ROS_WARN_STREAM("URDF Loader could not find link '" << link_name << "'.");
+      RCLCPP_WARN(rclcpp::get_logger("chain_logger"), "URDF Loader could not find link '%s'.", link_name.c_str());
     }
 
   }
-  ROS_INFO_STREAM("URDF parsing finished.");
+  RCLCPP_INFO(rclcpp::get_logger("chain_logger"),"URDF parsing finished.");
 }
 
 bool Chain::addToChain(const urdf::LinkConstSharedPtr& urdf_link) {
@@ -88,9 +80,9 @@ bool Chain::addToChain(const urdf::LinkConstSharedPtr& urdf_link) {
   if (joint->isActuated()) {
     num_actuated_joints_++;
   }
-//  ROS_INFO_STREAM("Origin: " << joint->getOrigin() << ", Axis: " << joint->getAxis() << ", Pose(0): " << joint->pose(0.0).toString());
+//  RCLCPP_INFO(rclcpp::get_logger("chain_logger"),"Origin: " << joint->getOrigin() << ", Axis: " << joint->getAxis() << ", Pose(0): " << joint->pose(0.0).toString());
   Link link(urdf_link->name, urdf_loader::toTransform(urdf_link->parent_joint->parent_to_joint_origin_transform), joint);
-  ROS_INFO_STREAM("Adding link " << urdf_link->name);
+  RCLCPP_INFO(rclcpp::get_logger("chain_logger"),"Adding link %s", urdf_link->name.c_str());
   chain_.push_back(link);
   tip_link_name_ = link.getName();
   return true;

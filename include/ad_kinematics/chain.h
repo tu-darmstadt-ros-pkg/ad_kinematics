@@ -6,7 +6,7 @@
 namespace ad_kinematics {
 class Chain {
 public:
-  Chain(const urdf::ModelInterfaceSharedPtr &urdf, const robot_model::JointModelGroup* joint_group);
+  Chain(const urdf::ModelInterfaceSharedPtr &urdf, const moveit::core::JointModelGroup* joint_group);
   Chain(std::string group_name);
 
   unsigned int getNumActuatedJoints();
@@ -19,7 +19,7 @@ public:
   template<typename T>
   Transform<T> computeTransform(const std::string& link_name, const std::vector<T>& joint_angles) {
     if (joint_angles.size() != getNumActuatedJoints()) {
-      ROS_ERROR("[Chain::computeTransform] joint_angles size (%lu) doesn't match number of actuated joints (%u).", joint_angles.size(), getNumActuatedJoints());
+      RCLCPP_ERROR(rclcpp::get_logger("chain_logger"), "[Chain::computeTransform] joint_angles size (%lu) doesn't match number of actuated joints (%u).", joint_angles.size(), getNumActuatedJoints());
       return Transform<T>();
     }
 
@@ -39,7 +39,7 @@ public:
     }
 
     if (!link_found) {
-      ROS_ERROR_STREAM("[Chain::computeTransform] Could not find link '" << link_name << "' in chain.");
+      RCLCPP_ERROR(rclcpp::get_logger("chain_logger"),"[Chain::computeTransform] Could not find link '%s' in chain.", link_name.c_str());
       return Transform<T>();
     }
 
@@ -54,8 +54,8 @@ public:
   std::vector<std::string> getActuatedJointNames() const;
 
 private:
-  void init(const urdf::ModelInterfaceSharedPtr &urdf, const robot_model::JointModelGroup* joint_group);
-  void buildChain(const urdf::LinkConstSharedPtr& root, const robot_model::JointModelGroup* joint_group);
+  void init(const urdf::ModelInterfaceSharedPtr &urdf, const moveit::core::JointModelGroup* joint_group);
+  void buildChain(const urdf::LinkConstSharedPtr& root, const moveit::core::JointModelGroup* joint_group);
   bool addToChain(const urdf::LinkConstSharedPtr& urdf_link);
   std::vector<Link> chain_;
   unsigned int num_actuated_joints_;

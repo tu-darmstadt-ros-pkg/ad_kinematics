@@ -2,6 +2,8 @@
 #define AD_KINEMATICS_TREE_H
 
 #include <ad_kinematics/urdf_loader.h>
+#include <urdf_parser/urdf_parser.h>
+
 #include <unordered_map>
 
 namespace ad_kinematics {
@@ -27,7 +29,7 @@ void setAll(std::map<K,V>& m, const V& val ) {
 class Tree {
 public:
   explicit Tree(const urdf::ModelInterfaceSharedPtr &urdf);
-  unsigned int getNumActiveJoints();
+  long unsigned int getNumActiveJoints();
 
   /**
    * Computes transform from base link to specified link
@@ -39,7 +41,7 @@ public:
   template<typename T>
   Transform<T> computeTransform(const std::string& link_name, const std::vector<T>& joint_angles) {
     if (joint_angles.size() != getNumActiveJoints()) {
-      ROS_ERROR("[Tree::computeTransform] joint_angles size (%lu) doesn't match number of actuated joints (%u).", joint_angles.size(), getNumActiveJoints());
+      RCLCPP_ERROR(rclcpp::get_logger("tree_logger"), "[Tree::computeTransform] joint_angles size (%lu) doesn't match number of actuated joints (%u).", joint_angles.size(), getNumActiveJoints());
       return Transform<T>();
     }
 
@@ -52,7 +54,7 @@ public:
     // Find end link
     auto it = links_.find(link_name);
     if (it == links_.end()) {
-      ROS_ERROR_STREAM("[Tree::computeTransform] Unknown link '" << link_name << "'.");
+      RCLCPP_ERROR(rclcpp::get_logger("tree_logger"), "[Tree::computeTransform] Unknown link '%s'.", link_name.c_str());
       return Transform<T>();
     }
 

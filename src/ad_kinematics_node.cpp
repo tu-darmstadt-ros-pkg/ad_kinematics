@@ -1,5 +1,4 @@
-#include <ros/ros.h>
-
+#include <rclcpp/rclcpp.hpp>
 #include <ad_kinematics/chain.h>
 
 int main(int argc, char** argv) {
@@ -7,7 +6,7 @@ int main(int argc, char** argv) {
   ros::NodeHandle pnh("~");
 
   std::string group_name = pnh.param<std::string>("group_name", "arm_group");
-  ROS_INFO_STREAM("Loading group '" << group_name << "'.");
+  RCLCPP_INFO("Loading group '" << group_name << "'.");
 
   ad_kinematics::Chain chain(group_name);
 
@@ -26,14 +25,14 @@ int main(int argc, char** argv) {
   ad_kinematics::Transformd transform = chain.computeTipTransform<double>(joint_states);
 //  ad_kinematics::Transformd transform = chain.computeTransform<double>("gripper_finger_link_0", joint_states);
   // TODO add asserts
-  ROS_INFO_STREAM("Transform from "<< chain.getBaseLinkName() << " to " << chain.getTipLinkName() << ":");
-  ROS_INFO_STREAM(transform.toString());
+  RCLCPP_INFO("Transform from "<< chain.getBaseLinkName() << " to " << chain.getTipLinkName() << ":");
+  RCLCPP_INFO(transform.toString());
 
   std::vector<std::string> joint_names = {"arm_joint_1", "sensor_head_yaw_joint"};
   std::vector<int> indices = chain.getJointQIndices(joint_names);
-  ROS_INFO_STREAM("Joint indices:");
+  RCLCPP_INFO("Joint indices:");
   for (unsigned int i = 0; i < joint_names.size(); i++) {
-    ROS_INFO_STREAM(joint_names[i] << " --> " << indices[i]);
+    RCLCPP_INFO(joint_names[i] << " --> " << indices[i]);
   }
 
 //  ros::spin();
