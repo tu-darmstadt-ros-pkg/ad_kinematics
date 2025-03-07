@@ -3,7 +3,6 @@
 
 #include <eigen3/Eigen/Eigen>
 #include <boost/shared_ptr.hpp>
-
 #include <iostream>
 
 #include <geometry_msgs/msg/pose.hpp>

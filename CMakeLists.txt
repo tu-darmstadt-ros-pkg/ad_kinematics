@@ -27,13 +27,10 @@ endforeach()
 add_library(ad_kinematics SHARED
   src/transforms.cpp
   src/tree.cpp
+  src/urdf_loader.cpp
 )
 
 target_compile_features(ad_kinematics PUBLIC cxx_std_17)
-#target_include_directories(ad_kinematics PUBLIC
-#  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-#  $<INSTALL_INTERFACE:include/ad_kinematics>
-#)
 
 target_include_directories(ad_kinematics PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -46,7 +43,8 @@ install(
   FILES     
     include/ad_kinematics/transforms.h
     include/ad_kinematics/tree.h
-  DESTINATION include/
+    include/ad_kinematics/urdf_loader.h
+  DESTINATION include/ad_kinematics
 )
 install(
   TARGETS
