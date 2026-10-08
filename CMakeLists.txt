@@ -11,7 +11,6 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
     ament_cmake
     Eigen3
     rclcpp
-    rclcpp_lifecycle
     geometry_msgs  	
     urdf
 )
@@ -38,6 +37,7 @@ target_include_directories(ad_kinematics PUBLIC
 )
 
 ament_target_dependencies(ad_kinematics PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
+target_link_libraries(ad_kinematics PUBLIC Eigen3::Eigen)
 
 install(
   FILES     
@@ -55,6 +55,12 @@ install(
   LIBRARY DESTINATION lib
   INCLUDES DESTINATION include
 )
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(${PROJECT_NAME}_test test/test_tree.cpp)
+  target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
+endif()
 
 ament_export_targets(export_ad_kinematics HAS_LIBRARY_TARGET)
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})

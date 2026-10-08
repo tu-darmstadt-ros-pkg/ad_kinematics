@@ -1,9 +1,11 @@
 #ifndef AD_KINEMATICS__URDF_LOADER_H
 #define AD_KINEMATICS__URDF_LOADER_H
 
-#include <rclcpp/rclcpp.hpp>
+#include <urdf_model/model.h>
+#include <urdf_world/types.h>
+
 #include "ad_kinematics/transforms.h"
-#include <urdf_parser/urdf_parser.h>
+
 namespace ad_kinematics {
 namespace urdf_loader {
   Transformd toTransform(const urdf::Pose& p);

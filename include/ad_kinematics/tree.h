@@ -1,10 +1,13 @@
 #ifndef AD_KINEMATICS_TREE_H
 #define AD_KINEMATICS_TREE_H
 
-#include <urdf_parser/urdf_parser.h>
+#include <map>
 #include <unordered_map>
 
-#include "rclcpp/rclcpp.hpp"
+#include <rclcpp/rclcpp.hpp>
+#include <urdf_model/model.h>
+#include <urdf_world/types.h>
+
 #include "ad_kinematics/transforms.h"
 #include "ad_kinematics/urdf_loader.h"
 
@@ -31,7 +34,7 @@ void setAll(std::map<K,V>& m, const V& val ) {
 class Tree {
 public:
   explicit Tree(const urdf::ModelInterfaceSharedPtr &urdf);
-  long unsigned int getNumActiveJoints();
+  size_t getNumActiveJoints() const;
 
   /**
    * Computes transform from base link to specified link
@@ -43,7 +46,7 @@ public:
   template<typename T>
   Transform<T> computeTransform(const std::string& link_name, const std::vector<T>& joint_angles) {
     if (joint_angles.size() != getNumActiveJoints()) {
-      RCLCPP_ERROR(rclcpp::get_logger("tree_logger"), "[Tree::computeTransform] joint_angles size (%lu) doesn't match number of actuated joints (%u).", joint_angles.size(), getNumActiveJoints());
+      RCLCPP_ERROR(rclcpp::get_logger("ad_kinematics"), "[Tree::computeTransform] joint_angles size (%lu) doesn't match number of actuated joints (%zu).", joint_angles.size(), getNumActiveJoints());
       return Transform<T>();
     }
 
@@ -56,7 +59,7 @@ public:
     // Find end link
     auto it = links_.find(link_name);
     if (it == links_.end()) {
-      RCLCPP_ERROR(rclcpp::get_logger("tree_logger"), "[Tree::computeTransform] Unknown link '%s'.", link_name.c_str());
+      RCLCPP_ERROR(rclcpp::get_logger("ad_kinematics"), "[Tree::computeTransform] Unknown link '%s'.", link_name.c_str());
       return Transform<T>();
     }
 
@@ -109,7 +112,7 @@ public:
 private:
   void buildTree(const urdf::LinkConstSharedPtr& link_ptr, const std::shared_ptr<Link>& parent);
   std::shared_ptr<Link> addToTree(const urdf::LinkConstSharedPtr& urdf_link, const std::shared_ptr<Link>& parent);
-  void updateMimicJoints(const urdf::ModelInterfaceSharedPtr& urdf);
+  void updateMimicJoints();
 
   std::unordered_map<std::string, std::shared_ptr<Link>> links_;
   std::unordered_map<std::string, std::shared_ptr<Joint>> joints_;
