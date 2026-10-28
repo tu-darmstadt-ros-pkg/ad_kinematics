@@ -39,7 +39,6 @@ target_include_directories(ad_kinematics PUBLIC
 target_link_libraries(ad_kinematics PUBLIC
                       Eigen3::Eigen
                       rclcpp::rclcpp
-                      rclcpp_lifecycle::rclcpp_lifecycle
                       geometry_msgs::geometry_msgs
                       urdf::urdf)
 
