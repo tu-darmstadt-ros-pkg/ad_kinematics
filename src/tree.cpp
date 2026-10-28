@@ -8,10 +8,10 @@ Tree::Tree(const urdf::ModelInterfaceSharedPtr& urdf)
 {
   base_link_name_ = urdf->getRoot()->name;
   buildTree(urdf->getRoot(), nullptr);
-  updateMimicJoints(urdf);
+  updateMimicJoints();
 }
 
-long unsigned int Tree::getNumActiveJoints()
+size_t Tree::getNumActiveJoints() const
 {
   return active_joint_names_.size();
 }
@@ -40,7 +40,7 @@ std::vector<int> Tree::getJointQIndices(const std::vector<std::string>& joint_na
       }
     }
     if (!found) {
-      RCLCPP_ERROR(rclcpp::get_logger("tree_logger"),"Could not find joint with name '%s'.", joint_name.c_str());
+      RCLCPP_ERROR(rclcpp::get_logger("ad_kinematics"),"Could not find joint with name '%s'.", joint_name.c_str());
       indices.push_back(-1);
     }
   }
@@ -68,9 +68,8 @@ std::shared_ptr<Link> Tree::addToTree(const urdf::LinkConstSharedPtr& urdf_link,
       mimic_joint_names_.push_back(joint->getName());
     }
   }
-  //  RCLCPP_INFO(rclcpp::get_logger("tree_logger"),"Origin: " << joint->getOrigin() << ", Axis: " << joint->getAxis() << ", Pose(0): " << joint->pose(0.0).toString());
   auto link = std::make_shared<Link>(urdf_link->name, urdf_loader::toTransform(urdf_link->parent_joint->parent_to_joint_origin_transform), joint, parent);
-  RCLCPP_INFO(rclcpp::get_logger("tree_logger"),"Adding link %s", urdf_link->name.c_str());
+  RCLCPP_DEBUG(rclcpp::get_logger("ad_kinematics"), "Adding link %s", urdf_link->name.c_str());
   links_.emplace(link->getName(), link);
 
   return link;
@@ -79,12 +78,12 @@ std::shared_ptr<Link> Tree::getLink(const std::string& link_name) const
 {
   auto it = links_.find(link_name);
   if (it == links_.end()) {
-    RCLCPP_ERROR(rclcpp::get_logger("tree_logger"),"[Tree::computeTransform] Unknown link '%s'.", link_name.c_str());
+    RCLCPP_ERROR(rclcpp::get_logger("ad_kinematics"),"[Tree::getLink] Unknown link '%s'.", link_name.c_str());
     return {};
   }
   return it->second;
 }
-void Tree::updateMimicJoints(const urdf::ModelInterfaceSharedPtr& urdf)
+void Tree::updateMimicJoints()
 {
   for (auto& mimic_name: mimic_joint_names_) {
     auto joint = getJoint(mimic_name);
@@ -94,7 +93,7 @@ void Tree::updateMimicJoints(const urdf::ModelInterfaceSharedPtr& urdf)
     if (!joint_mimic) continue;
 
     joint->setQIndex(joint_mimic->getQIndex());
-    RCLCPP_INFO(rclcpp::get_logger("tree_logger"),"Setting joint %s as mimic of %s (offset: %f, multiplier: %f, q_index: %i)",
+    RCLCPP_DEBUG(rclcpp::get_logger("ad_kinematics"), "Setting joint %s as mimic of %s (offset: %f, multiplier: %f, q_index: %i)",
     joint->getName().c_str(), joint->getMimic()->mimic_joint_name.c_str(), joint->getMimic()->offset, joint->getMimic()->multiplier, joint->getQIndex());
   }
 }
@@ -102,7 +101,7 @@ std::shared_ptr<Joint> Tree::getJoint(const std::string& joint_name) const
 {
   auto it = joints_.find(joint_name);
   if (it == joints_.end()) {
-    RCLCPP_ERROR(rclcpp::get_logger("tree_logger"),"[Tree::computeTransform] Unknown joint '%s'.", joint_name.c_str());
+    RCLCPP_ERROR(rclcpp::get_logger("ad_kinematics"),"[Tree::getJoint] Unknown joint '%s'.", joint_name.c_str());
     return {};
   }
   return it->second;

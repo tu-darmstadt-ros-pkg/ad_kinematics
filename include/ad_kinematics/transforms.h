@@ -1,9 +1,11 @@
 #ifndef AD_KINEMATICS__TRANSFORMS_H
 #define AD_KINEMATICS__TRANSFORMS_H
 
-#include <eigen3/Eigen/Eigen>
-#include <boost/shared_ptr.hpp>
+#include <Eigen/Eigen>
 #include <iostream>
+#include <memory>
+#include <sstream>
+#include <string>
 
 #include <geometry_msgs/msg/pose.hpp>
 
@@ -177,7 +179,6 @@ public:
     return parent_joint_->pose(q) * tip_transform_.cast<T>();
   }
 
-  //Transform<double> pose(double q) const;
   std::shared_ptr<Joint> getParentJoint() const;
   std::shared_ptr<Link> getParentLink() const;
   std::string getName() const;

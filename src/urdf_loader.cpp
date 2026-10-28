@@ -1,5 +1,7 @@
 #include <ad_kinematics/urdf_loader.h>
 
+#include <stdexcept>
+
 namespace ad_kinematics {
 namespace urdf_loader {
 
@@ -13,23 +15,20 @@ std::shared_ptr<Joint> toJoint(const urdf::JointConstSharedPtr& urdf_joint, int 
   switch (urdf_joint->type) {
     case urdf::Joint::FIXED:
       joint.reset(new FixedJoint(urdf_joint->name, parent_transform.translation));
-      RCLCPP_INFO(rclcpp::get_logger("urdf_loader_logger"),"Adding fixed joint %s", joint->getName().c_str());
       break;
     case urdf::Joint::REVOLUTE: {
       Eigen::Vector3d axis = toTranslation(urdf_joint->axis);
       joint.reset(new RevoluteJoint(urdf_joint->name, parent_transform.translation, parent_transform.rotation * axis, q_index,
                                     urdf_joint->limits->upper, urdf_joint->limits->lower));
-      //RCLCPP_INFO(rclcpp::get_logger("urdf_loader_logger"),"Adding revolute joint " << joint->getName() << ". Limits [" << joint->getLowerLimit() << ", " << joint->getUpperLimit() << "]. q_index=" << q_index);
       break;
       }
     case urdf::Joint::CONTINUOUS: {
       Eigen::Vector3d axis = toTranslation(urdf_joint->axis);
       joint.reset(new ContinuousJoint(urdf_joint->name, parent_transform.translation, parent_transform.rotation * axis, q_index));
-      //RCLCPP_INFO(rclcpp::get_logger("urdf_loader_logger"),"Adding continuous joint " << joint->getName() << ". Limits [" << joint->getLowerLimit() << ", " << joint->getUpperLimit() << "]. q_index=" << q_index);
       break;
     }
     default:
-      RCLCPP_ERROR(rclcpp::get_logger("CeresIK"), "Unknown joint type in urdf.");
+      throw std::invalid_argument("ad_kinematics: joint '" + urdf_joint->name + "' has a type other than fixed, revolute or continuous.");
   }
 
   if (is_mimic) {
