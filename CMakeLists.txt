@@ -37,7 +37,12 @@ target_include_directories(ad_kinematics PUBLIC
   $<INSTALL_INTERFACE:include/ad_kinematics>
 )
 
-ament_target_dependencies(ad_kinematics PUBLIC ${THIS_PACKAGE_INCLUDE_DEPENDS})
+target_link_libraries(ad_kinematics PUBLIC
+                      Eigen3::Eigen
+                      rclcpp::rclcpp
+                      rclcpp_lifecycle::rclcpp_lifecycle
+                      geometry_msgs::geometry_msgs
+                      urdf::urdf)
 
 install(
   FILES     
